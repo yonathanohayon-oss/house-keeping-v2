@@ -2,6 +2,42 @@
   {
     "title": "שטיפת רצפה",
     "points": 10,
+    "done": false,
+    "user": null
+  },
+  {
+    "title": "ניקוי מזגן",
+    "points": 8,
+    "done": false,
+    "user": null
+  },
+  {
+    "title": "החלפת מצעים",
+    "points": 8,
+    "done": false,
+    "user": null
+  },
+  {
+    "title": "סידור חדר מיה",
+    "points": 7,
+    "done": false,
+    "user": null
+  },
+  {
+    "title": "זבל ומיחזור",
+    "points": 3,
+    "done": false,
+    "user": null
+  },
+  {
+    "title": "הפעלת מדיח",
+    "points": 5,
+    "done": false,
+    "user": null
+  },
+  {
+    "title": "שטיפת רצפה",
+    "points": 10,
     "done": true,
     "user": "יוני"
   },
