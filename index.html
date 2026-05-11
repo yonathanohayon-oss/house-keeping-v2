@@ -10,16 +10,13 @@
         :root { --yoni: #0ea5e9; --ina: #ec4899; --primary: #6366f1; }
         body { background-color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; padding-bottom: 180px; }
         
-        /* Header & Scores */
         .app-header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 25px; border-radius: 0 0 35px 35px; box-shadow: 0 10px 30px rgba(79, 70, 229, 0.2); }
         .score-card { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); border-radius: 20px; padding: 15px; border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; }
         .score-card.active-user { border: 2px solid white; box-shadow: 0 0 15px rgba(255,255,255,0.4); }
         
-        /* Progress Bar */
         .progress { height: 8px; border-radius: 10px; background: rgba(255,255,255,0.2); margin-top: 15px; }
         .progress-bar { background-color: #22c55e; }
 
-        /* Task Cards */
         .task-card { background: white; border-radius: 20px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03); }
         .v-check { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: 15px; transition: 0.2s; }
         .v-check.checked { background: #22c55e; border-color: #22c55e; color: white; }
@@ -31,28 +28,26 @@
         .completed { opacity: 0.6; background: #f1f5f9; }
         .completed .task-title { text-decoration: line-through; color: #64748b; }
 
-        /* Floating Panel */
         .floating-input { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: white; padding: 20px; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 25px rgba(0,0,0,0.08); z-index: 1000; }
         
-        /* Initial Setup */
         #setupOverlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; }
         .user-opt { width: 100%; max-width: 300px; padding: 20px; border-radius: 20px; margin-bottom: 15px; border: 2px solid #f1f5f9; text-align: center; cursor: pointer; font-weight: 700; transition: 0.2s; }
-        .user-opt:hover { transform: translateY(-3px); }
+        #status-msg { font-size: 0.75rem; text-align: center; margin-top: 5px; color: #64748b; }
     </style>
 </head>
 <body>
 
 <div id="setupOverlay" style="display: none;">
-    <h2 class="mb-4">ברוכים הבאים! מי משתמש?</h2>
+    <h2 class="mb-4 text-center">ברוכים הבאים!<br>מי נכנס לליגה?</h2>
     <div class="user-opt" style="color: var(--yoni); border-color: var(--yoni);" onclick="setupUser('יוני')">יוני 🧔</div>
     <div class="user-opt" style="color: var(--ina); border-color: var(--ina);" onclick="setupUser('אינה')">אינה 👩‍🎨</div>
-    <input type="password" id="firstToken" class="form-control mt-4 rounded-pill" placeholder="הדבק טוקן גיטהאב (פעם אחת)">
+    <input type="password" id="firstToken" class="form-control mt-4 rounded-pill" placeholder="הדבק טוקן גיטהאב (פעם אחת בלבד)">
 </div>
 
 <div class="app-header">
     <div class="d-flex justify-content-between align-items-center">
         <span id="currentUserDisplay" class="badge bg-white text-dark rounded-pill"></span>
-        <span onclick="logout()" style="cursor:pointer; font-size: 0.8rem;">החלף משתמש <i class="bi bi-arrow-left-right"></i></span>
+        <span onclick="logout()" style="cursor:pointer; font-size: 0.8rem; opacity: 0.8;">החלף משתמש <i class="bi bi-arrow-left-right"></i></span>
     </div>
     
     <div class="row g-3 mt-2">
@@ -74,6 +69,7 @@
 
 <div class="container mt-4" style="max-width: 500px;">
     <div id="taskList"></div>
+    <div id="status-msg"></div>
 </div>
 
 <div class="floating-input">
@@ -88,12 +84,13 @@
 <script>
     const REPO = "yonathanohayon-oss/house-keeping-v2";
     const FILE_PATH = "tasks.json";
-    let sha = ""; let allTasks = [];
+    let currentSha = ""; 
+    let allTasks = [];
     let currentUser = localStorage.getItem('app_user');
 
     function setupUser(user) {
         const token = document.getElementById('firstToken').value;
-        if (!token && !localStorage.getItem('gh_token')) { alert("נא להזין טוקן!"); return; }
+        if (!token && !localStorage.getItem('gh_token')) { alert("חובה להזין טוקן בשימוש ראשון"); return; }
         if (token) localStorage.setItem('gh_token', token.trim());
         localStorage.setItem('app_user', user);
         currentUser = user;
@@ -104,23 +101,28 @@
     function logout() { localStorage.removeItem('app_user'); location.reload(); }
 
     async function init() {
-        if (!currentUser) { document.getElementById('setupOverlay').style.display = 'flex'; return; }
-        document.getElementById('currentUserDisplay').innerText = `מחובר כ: ${currentUser}`;
-        document.getElementById(`card-${currentUser}`).classList.add('active-user');
+        if (!currentUser) { 
+            document.getElementById('setupOverlay').style.display = 'flex'; 
+            return; 
+        }
+        document.getElementById('currentUserDisplay').innerText = `שלום, ${currentUser}`;
+        const activeCard = document.getElementById(`card-${currentUser}`);
+        if(activeCard) activeCard.classList.add('active-user');
         fetchTasks();
     }
 
     async function fetchTasks() {
         const token = localStorage.getItem('gh_token');
+        if(!token) return;
         try {
             const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${Date.now()}`, {
-                headers: { 'Authorization': `token ${token}` }
+                headers: { 'Authorization': `token ${token}`, 'Cache-Control': 'no-cache' }
             });
             const data = await res.json();
-            sha = data.sha;
+            currentSha = data.sha;
             allTasks = JSON.parse(decodeURIComponent(escape(atob(data.content))));
             renderUI();
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Fetch error:", e); }
     }
 
     function renderUI() {
@@ -131,18 +133,18 @@
 
         allTasks.sort((a,b) => a.done - b.done).forEach((task, index) => {
             if (task.done) {
-                scores[task.user] += parseInt(task.points);
+                scores[task.user] = (scores[task.user] || 0) + parseInt(task.points);
                 doneCount++;
             }
 
             list.innerHTML += `
                 <div class="task-card ${task.done ? 'completed' : ''}">
                     <div class="v-check ${task.done ? 'checked' : ''}" onclick="toggleTask(${index})">
-                        <i class="bi ${task.done ? 'bi-check-lg' : ''}"></i>
+                        <i class="bi ${task.done ? 'bi-check-lg' : 'bi-circle'}"></i>
                     </div>
                     <div class="task-info">
                         <span class="task-title">${task.title}</span>
-                        <span class="task-pts">${task.points} נק' ${task.done ? `• ${task.user}` : ''}</span>
+                        <span class="task-pts">${task.points} נק' ${task.done ? `• בוצע ע"י ${task.user}` : ''}</span>
                     </div>
                     <i class="bi bi-trash3 text-danger opacity-25" onclick="deleteTask(${index})"></i>
                 </div>`;
@@ -163,7 +165,7 @@
             allTasks[index].done = true;
             allTasks[index].user = currentUser;
         }
-        updateGithub();
+        await updateGithub();
     }
 
     async function addTask() {
@@ -171,32 +173,62 @@
         const points = document.getElementById('pointsInput').value;
         if (!title) return;
         allTasks.unshift({ title, points, done: false, user: null });
-        updateGithub();
+        await updateGithub();
+        document.getElementById('taskInput').value = '';
     }
 
     async function addWeeklyChores() {
         const weekly = [
-            {title:"שטיפת רצפה", points:10}, {title:"פילטרים מזגן", points:8},
+            {title:"שטיפת רצפה יסודית", points:10}, {title:"ניקוי פילטרים מזגן", points:8},
             {title:"החלפת מצעים", points:8}, {title:"סידור חדר מיה", points:7},
-            {title:"זבל ומיחזור", points:3}, {title:"מדיח", points:5}
+            {title:"זבל ומיחזור", points:3}, {title:"הפעלת מדיח", points:5}
         ];
         weekly.forEach(c => allTasks.push({...c, done:false, user:null}));
-        updateGithub();
+        await updateGithub();
     }
 
     async function updateGithub() {
         const token = localStorage.getItem('gh_token');
-        const content = btoa(unescape(encodeURIComponent(JSON.stringify(allTasks, null, 2))));
-        await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
-            method: 'PUT',
-            headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: "Update", content, sha: sha })
-        });
-        fetchTasks();
-        document.getElementById('taskInput').value = '';
+        const status = document.getElementById('status-msg');
+        status.innerText = "שומר שינויים...";
+
+        try {
+            // קודם כל מושכים את ה-SHA הכי חדש כדי למנוע חסימה
+            const checkRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${Date.now()}`, {
+                headers: { 'Authorization': `token ${token}`, 'Cache-Control': 'no-cache' }
+            });
+            const checkData = await checkRes.json();
+            
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(allTasks, null, 2))));
+            
+            const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    message: `Action by ${currentUser}`, 
+                    content: content, 
+                    sha: checkData.sha 
+                })
+            });
+
+            if (res.ok) {
+                status.innerText = "נשמר בהצלחה ✅";
+                setTimeout(() => { status.innerText = ""; }, 2000);
+                await fetchTasks();
+            } else {
+                status.innerText = "שגיאה בשמירה. נסה שוב.";
+            }
+        } catch (e) { 
+            status.innerText = "שגיאת תקשורת";
+        }
     }
 
-    async function deleteTask(index) { if(confirm('למחוק?')) { allTasks.splice(index, 1); updateGithub(); } }
+    async function deleteTask(index) { 
+        if(confirm('למחוק את המשימה?')) { 
+            allTasks.splice(index, 1); 
+            await updateGithub(); 
+        } 
+    }
 
     init();
 </script>
