@@ -2,8 +2,8 @@
   {
     "title": "שטיפת רצפה",
     "points": 10,
-    "done": false,
-    "user": null
+    "done": true,
+    "user": "יוני"
   },
   {
     "title": "מדיח",
