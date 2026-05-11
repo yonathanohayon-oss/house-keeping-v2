@@ -8,52 +8,46 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root { --primary: #6366f1; --ina: #ec4899; --yoni: #0ea5e9; }
-        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; padding-bottom: 140px; }
-        .app-container { max-width: 500px; margin: 20px auto; background: white; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.05); overflow: hidden; }
-        .header { background: linear-gradient(135deg, var(--primary), #4338ca); color: white; padding: 25px; text-align: center; }
-        .score-board { display: flex; justify-content: space-around; background: rgba(255,255,255,0.15); margin-top: 15px; padding: 15px; border-radius: 20px; }
-        .task-card { background: #fff; border: 1px solid #f1f5f9; border-radius: 20px; padding: 15px; margin-bottom: 12px; display: flex; align-items: center; }
-        .task-card.done { background-color: #f1f5f9; opacity: 0.8; border: 1px dashed #cbd5e1; }
-        .user-assigned { width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-left: 12px; flex-shrink: 0; }
-        .badge-yoni { background: var(--yoni); }
-        .badge-ina { background: var(--ina); }
-        .badge-none { background: #e2e8f0; color: #94a3b8; }
-        .task-info { flex-grow: 1; cursor: pointer; }
-        .task-points { font-size: 0.75rem; color: var(--primary); font-weight: bold; background: #eef2ff; padding: 2px 8px; border-radius: 8px; }
-        .input-section { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: white; padding: 20px; border-top: 1px solid #f1f5f9; box-shadow: 0 -10px 25px rgba(0,0,0,0.05); }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; padding-bottom: 160px; }
+        .app-container { max-width: 500px; margin: 10px auto; background: white; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
+        .header { background: linear-gradient(135deg, var(--primary), #4338ca); color: white; padding: 20px; text-align: center; }
+        .score-board { display: flex; justify-content: space-around; background: rgba(255,255,255,0.15); margin-top: 10px; padding: 10px; border-radius: 15px; }
+        .task-card { background: #fff; border: 1px solid #f1f5f9; border-radius: 15px; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; }
+        .task-card.done { background-color: #f8fafc; opacity: 0.7; border: 1px dashed #cbd5e1; }
+        .user-badge { width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-left: 12px; flex-shrink: 0; }
+        .badge-yoni { background: var(--yoni); } .badge-ina { background: var(--ina); } .badge-none { background: #e2e8f0; color: #94a3b8; }
+        .task-info { flex-grow: 1; cursor: pointer; min-width: 0; }
+        .task-title { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .input-section { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: white; padding: 15px; border-top: 1px solid #f1f5f9; box-shadow: 0 -10px 20px rgba(0,0,0,0.05); z-index: 9999; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <div class="header">
-        <h3 class="mb-0">מי לוקח את המשימה? 🏆</h3>
+        <h4 class="mb-0">מי לוקח את המשימה? 🏆</h4>
         <div class="score-board">
-            <div><small>יוני</small><br><strong id="scoreYoni" style="font-size: 1.5rem;">0</strong></div>
+            <div><small>יוני</small><br><strong id="scoreYoni">0</strong></div>
             <div style="border-left: 1px solid rgba(255,255,255,0.3);"></div>
-            <div><small>אינה</small><br><strong id="scoreIna" style="font-size: 1.5rem;">0</strong></div>
+            <div><small>אינה</small><br><strong id="scoreIna">0</strong></div>
         </div>
     </div>
 
-    <div class="content p-3">
+    <div class="content p-3" id="mainContent">
         <div id="taskList">
-            <p class="text-center text-muted py-4">טוען נתונים...</p>
+            <p class="text-center text-muted py-4">הזן טוקן למטה כדי להתחיל...</p>
         </div>
-        <div id="status" class="text-center small text-muted mt-2"></div>
+        <div id="status" class="text-center small text-muted"></div>
     </div>
 
     <div class="input-section">
-        <div class="mb-2">
-            <input type="password" id="ghToken" class="form-control form-control-sm rounded-pill" placeholder="הכנס טוקן גיטהאב (ghp_...)">
-        </div>
+        <input type="password" id="ghToken" class="form-control form-control-sm mb-2 rounded-pill" placeholder="הדבק טוקן כאן (ghp_...)" onchange="fetchTasks()">
         <div class="input-group mb-2">
-            <input type="text" id="taskInput" class="form-control rounded-start-pill" placeholder="משימה חדשה...">
-            <input type="number" id="pointsInput" class="form-control" style="max-width: 70px;" value="5">
-            <button class="btn btn-primary rounded-end-pill px-3" onclick="addTask()"><i class="bi bi-plus-lg"></i></button>
+            <input type="text" id="taskInput" class="form-control" placeholder="משימה חדשה...">
+            <input type="number" id="pointsInput" class="form-control" style="max-width: 65px;" value="5">
+            <button class="btn btn-primary px-3" onclick="addTask()"><i class="bi bi-plus-lg"></i></button>
         </div>
-        <button class="btn btn-sm btn-light w-100 rounded-pill text-primary fw-bold" onclick="addWeeklyChores()">
-            <i class="bi bi-magic"></i> טען משימות שבועיות
-        </button>
+        <button class="btn btn-sm btn-outline-primary w-100 rounded-pill fw-bold" onclick="addWeeklyChores()">טען משימות שבועיות</button>
     </div>
 </div>
 
@@ -63,74 +57,60 @@
     let sha = "";
     let allTasks = [];
 
-    const WEEKLY_CHORES = [
-        { title: "שטיפת רצפה", points: 10 },
-        { title: "ניקוי פילטרים מזגן", points: 8 },
-        { title: "החלפת מצעים", points: 8 },
-        { title: "סידור חדר הילדים (מיה)", points: 7 },
-        { title: "הורדת זבל ומיחזור", points: 3 },
-        { title: "הפעלת מדיח וריקון", points: 5 },
-        { title: "טיפול בגינה ובעציצים", points: 5 }
-    ];
-
     async function fetchTasks() {
         const token = document.getElementById('ghToken').value || localStorage.getItem('gh_token');
-        if (!token) {
-            document.getElementById('status').innerText = "אנא הזן טוקן למטה";
-            return;
-        }
-        
+        if (!token) return;
+        localStorage.setItem('gh_token', token);
+        document.getElementById('status').innerText = "מתחבר לגיטהאב...";
+
         try {
-            const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${new Date().getTime()}`, {
-                headers: { 'Authorization': `token ${token.trim()}`, 'Cache-Control': 'no-cache' }
+            const url = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${Date.now()}`;
+            const res = await fetch(url, {
+                headers: { 'Authorization': `token ${token.trim()}` }
             });
-            
+
             if (res.ok) {
                 const data = await res.json();
                 sha = data.sha;
-                const binary = atob(data.content);
-                const bytes = new Uint8Array(binary.length);
-                for (let i = 0; i < binary.length; i++) { bytes[i] = binary.charCodeAt(i); }
-                allTasks = JSON.parse(new TextDecoder().decode(bytes));
-                localStorage.setItem('gh_token', token.trim());
+                const content = decodeURIComponent(escape(atob(data.content)));
+                allTasks = JSON.parse(content);
                 renderTasks();
                 calculateScores();
                 document.getElementById('status').innerText = "מחובר ✅";
+                document.getElementById('ghToken').value = token;
             } else {
-                document.getElementById('status').innerText = "שגיאה בחיבור (בדוק טוקן)";
+                document.getElementById('status').innerText = "שגיאת טוקן או גישה (401/404)";
             }
         } catch (e) {
-            document.getElementById('status').innerText = "שגיאה בטעינה";
+            document.getElementById('status').innerText = "שגיאה: " + e.message;
         }
     }
 
     function renderTasks() {
         const list = document.getElementById('taskList');
-        list.innerHTML = allTasks.length ? '' : '<p class="text-center text-muted">אין משימות</p>';
+        list.innerHTML = allTasks.length ? '' : '<p class="text-center text-muted">אין משימות פתוחות</p>';
         allTasks.forEach((task, index) => {
             const badgeClass = !task.user ? 'badge-none' : (task.user === 'יוני' ? 'badge-yoni' : 'badge-ina');
             list.innerHTML += `
                 <div class="task-card ${task.done ? 'done' : ''}">
-                    <div class="user-assigned ${badgeClass}">${task.user ? task.user[0] : '?'}</div>
+                    <div class="user-badge ${badgeClass}">${task.user ? task.user[0] : '?'}</div>
                     <div class="task-info" onclick="claimTask(${index})">
                         <span class="task-title" style="${task.done ? 'text-decoration:line-through' : ''}">${task.title}</span>
-                        <span class="task-points">${task.points} נק'</span>
+                        <small class="text-primary fw-bold">${task.points} נק'</small>
                     </div>
-                    <button class="btn btn-link text-danger ms-2" onclick="deleteTask(${index})"><i class="bi bi-trash"></i></button>
+                    <i class="bi bi-trash text-danger ms-2" onclick="deleteTask(${index})"></i>
                 </div>`;
         });
     }
 
     async function claimTask(index) {
         if (allTasks[index].done) {
-            allTasks[index].done = false;
-            allTasks[index].user = null;
+            allTasks[index].done = false; allTasks[index].user = null;
         } else {
-            const user = prompt("מי ביצע? (יוני / אינה)");
+            const user = prompt("מי ביצע? יוני / אינה");
             if (user === "יוני" || user === "אינה") {
-                allTasks[index].done = true;
-                allTasks[index].user = user;
-            } else { return; }
+                allTasks[index].done = true; allTasks[index].user = user;
+            } else return;
         }
         await updateGithub();
     }
@@ -144,42 +124,45 @@
     }
 
     async function addWeeklyChores() {
-        WEEKLY_CHORES.forEach(c => allTasks.push({ ...c, done: false, user: null }));
+        const weekly = [
+            {title:"שטיפת רצפה", points:10}, {title:"פילטרים מזגן", points:8},
+            {title:"החלפת מצעים", points:8}, {title:"חדר מיה", points:7},
+            {title:"זבל ומיחזור", points:3}, {title:"מדיח", points:5}
+        ];
+        weekly.forEach(c => allTasks.push({...c, done:false, user:null}));
         await updateGithub();
     }
 
     async function deleteTask(index) {
-        if(confirm('למחוק?')) {
-            allTasks.splice(index, 1);
-            await updateGithub();
-        }
+        if(confirm('למחוק?')) { allTasks.splice(index, 1); await updateGithub(); }
     }
 
     async function updateGithub() {
         const token = localStorage.getItem('gh_token');
         document.getElementById('status').innerText = "שומר...";
-        const bytes = new TextEncoder().encode(JSON.stringify(allTasks, null, 2));
-        const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
-            method: 'PUT',
-            headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: "Update", content: btoa(String.fromCharCode(...bytes)), sha: sha })
-        });
-        if (res.ok) {
-            const data = await res.json();
-            sha = data.content.sha;
-            document.getElementById('taskInput').value = '';
-            fetchTasks();
-        }
+        try {
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(allTasks, null, 2))));
+            const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: "Update", content, sha: sha })
+            });
+            if (res.ok) { fetchTasks(); document.getElementById('taskInput').value = ''; }
+        } catch (e) { alert("שגיאת שמירה"); }
     }
 
     function calculateScores() {
-        const s = { 'יוני': 0, 'אינה': 0 };
-        allTasks.forEach(t => { if(t.done && t.user) s[t.user] += parseInt(t.points); });
-        document.getElementById('scoreYoni').innerText = s['יוני'];
-        document.getElementById('scoreIna').innerText = s['אינה'];
+        let sY = 0, sI = 0;
+        allTasks.forEach(t => { if(t.done && t.user === 'יוני') sY += parseInt(t.points); if(t.done && t.user === 'אינה') sI += parseInt(t.points); });
+        document.getElementById('scoreYoni').innerText = sY;
+        document.getElementById('scoreIna').innerText = sI;
     }
 
-    fetchTasks();
+    // הפעלה ראשונית
+    if (localStorage.getItem('gh_token')) {
+        document.getElementById('ghToken').value = localStorage.getItem('gh_token');
+        fetchTasks();
+    }
 </script>
 </body>
 </html>
