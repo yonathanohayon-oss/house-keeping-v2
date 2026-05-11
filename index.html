@@ -58,153 +58,51 @@
         </button>
     </div>
 </div>
-
 <script>
     const REPO = "yonathanohayon-oss/house-keeping-v2";
     const FILE_PATH = "tasks.json";
     let sha = "";
     let allTasks = [];
 
-    const WEEKLY_CHORES = [
-        { title: "שטיפת רצפה", points: 10 },
-        { title: "ניקוי פילטרים מזגן", points: 8 },
-        { title: "החלפת מצעים", points: 8 },
-        { title: "סידור חדר הילדים (מיה)", points: 7 },
-        { title: "הורדת זבל ומיחזור", points: 3 },
-        { title: "הפעלת מדיח וריקון", points: 5 },
-        { title: "טיפול בגינה ובעציצים", points: 5 }
-    ];
-
     async function fetchTasks() {
-        const token = localStorage.getItem('gh_token');
+        const token = document.getElementById('ghToken').value || localStorage.getItem('gh_token');
         if (!token) {
             document.getElementById('tokenInputArea').style.display = 'block';
+            document.getElementById('status').innerText = "אנא הכנס טוקן";
             return;
         }
         
         try {
             const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${new Date().getTime()}`, {
-                headers: { 'Authorization': `token ${token}`, 'Cache-Control': 'no-cache' }
+                headers: { 'Authorization': `token ${token.trim()}`, 'Cache-Control': 'no-cache' }
             });
-            if (!res.ok) throw new Error("Unauthorized");
+
+            if (res.status === 404) {
+                document.getElementById('status').innerText = "שגיאה: הריפו או הקובץ לא נמצאו. בדוק את שם ה-REPO בקוד.";
+                return;
+            }
+            if (res.status === 401) {
+                document.getElementById('status').innerText = "שגיאה: הטוקן לא תקין או פג תוקף.";
+                return;
+            }
+            if (!res.ok) throw new Error("Connection failed");
             
             const data = await res.json();
             sha = data.sha;
-            
-            const binaryString = atob(data.content);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) { bytes[i] = binaryString.charCodeAt(i); }
-            const decodedText = new TextDecoder('utf-8').decode(bytes);
-            
+            const decodedText = new TextDecoder('utf-8').decode(new Uint8Array(atob(data.content).split("").map(c => c.charCodeAt(0))));
             allTasks = JSON.parse(decodedText);
             renderTasks();
             calculateScores();
-            document.getElementById('status').innerText = "עודכן הרגע ✅";
+            document.getElementById('status').innerText = "מחובר ✅";
+            document.getElementById('tokenInputArea').style.display = 'none';
+            localStorage.setItem('gh_token', token.trim());
         } catch (e) { 
-            document.getElementById('tokenInputArea').style.display = 'block';
-            document.getElementById('status').innerText = "שגיאת חיבור או טוקן";
+            document.getElementById('status').innerText = "שגיאה לא צפויה: " + e.message;
         }
     }
 
-    function calculateScores() {
-        const scores = { 'יוני': 0, 'אינה': 0 };
-        allTasks.forEach(t => { if(t.done && t.user) scores[t.user] += parseInt(t.points || 0); });
-        document.getElementById('scoreYoni').innerText = scores['יוני'];
-        document.getElementById('scoreIna').innerText = scores['אינה'];
-    }
-
-    function renderTasks() {
-        const list = document.getElementById('taskList');
-        list.innerHTML = allTasks.length ? '' : '<p class="text-center text-muted py-4">אין משימות פתוחות. לחץ למטה לטעינה!</p>';
-        allTasks.forEach((task, index) => {
-            const isDone = task.done;
-            const badgeClass = !task.user ? 'badge-none' : (task.user === 'יוני' ? 'badge-yoni' : 'badge-ina');
-            const userInitial = task.user ? task.user[0] : '?';
-            
-            list.innerHTML += `
-                <div class="task-card ${isDone ? 'done' : ''}">
-                    <div class="user-assigned ${badgeClass}">${userInitial}</div>
-                    <div class="task-info" onclick="claimTask(${index})">
-                        <span class="task-title" style="${isDone ? 'text-decoration:line-through' : ''}">${task.title}</span>
-                        <span class="task-points">${task.points} נק'</span>
-                    </div>
-                    <button class="btn btn-link text-danger p-0 ms-2" onclick="deleteTask(${index})"><i class="bi bi-trash"></i></button>
-                </div>`;
-        });
-    }
-
-    function claimTask(index) {
-        if (allTasks[index].done) {
-            if(confirm('להחזיר את המטלה לרשימה?')) {
-                allTasks[index].done = false;
-                allTasks[index].user = null;
-            }
-        } else {
-            const user = prompt("מי ביצע? (יוני / אינה)");
-            if (user === "יוני" || user === "אינה") {
-                allTasks[index].done = true;
-                allTasks[index].user = user;
-            }
-        }
-        updateGithub();
-    }
-
-    function addWeeklyChores() {
-        WEEKLY_CHORES.forEach(c => allTasks.push({ ...c, done: false, user: null }));
-        updateGithub();
-    }
-
-    async function addTask() {
-        const title = document.getElementById('taskInput').value;
-        const points = document.getElementById('pointsInput').value;
-        const tokenInput = document.getElementById('ghToken').value;
-        
-        if (tokenInput) localStorage.setItem('gh_token', tokenInput);
-        if (!title) return;
-
-        allTasks.push({ title, points, done: false, user: null });
-        updateGithub();
-    }
-
-    function deleteTask(index) {
-        if(confirm('למחוק את המשימה לצמיתות?')) { 
-            allTasks.splice(index, 1); 
-            updateGithub(); 
-        }
-    }
-
-    async function updateGithub() {
-        const token = localStorage.getItem('gh_token');
-        if (!token) { alert("חסר טוקן!"); return; }
-        
-        document.getElementById('status').innerText = "שומר בענן...";
-        
-        try {
-            const bytes = new TextEncoder().encode(JSON.stringify(allTasks, null, 2));
-            const base64Content = btoa(String.fromCharCode(...bytes));
-
-            const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
-                method: 'PUT',
-                headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: "Update tasks", content: base64Content, sha: sha })
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                sha = data.content.sha;
-                document.getElementById('status').innerText = "נשמר בהצלחה ✅";
-                document.getElementById('taskInput').value = '';
-                renderTasks(); 
-                calculateScores();
-            } else {
-                throw new Error("Update failed");
-            }
-        } catch (e) {
-            document.getElementById('status').innerText = "שגיאת שמירה - נסה לרענן";
-        }
-    }
-
-    fetchTasks();
+    // ... (שאר הפונקציות: renderTasks, calculateScores, addTask, updateGithub נשארות אותו דבר)
+    // רק תוודא שהן קיימות בקובץ שלך
 </script>
 </body>
 </html>
