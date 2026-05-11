@@ -10,20 +10,27 @@
     <style>
         :root { --yoni: #0ea5e9; --ina: #ec4899; --primary: #6366f1; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
         @media (prefers-color-scheme: dark) { :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; } }
-        body { background-color: var(--bg); color: var(--text); font-family: system-ui, sans-serif; padding-bottom: 200px; }
+        body { background-color: var(--bg); color: var(--text); font-family: system-ui, sans-serif; padding-bottom: 220px; transition: 0.3s; }
+        
         .app-header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 25px; border-radius: 0 0 35px 35px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         .leaderboard { display: flex; justify-content: center; gap: 15px; margin-top: 15px; }
         .score-pill { background: rgba(255, 255, 255, 0.15); padding: 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); min-width: 110px; position: relative; }
         .score-pill.winner { border: 2px solid #fbbf24; background: rgba(251, 191, 36, 0.2); }
         .crown { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); font-size: 1.2rem; display: none; }
         .winner .crown { display: block; }
-        .task-card { background: var(--card); border-radius: 20px; padding: 15px; margin-bottom: 12px; display: flex; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); }
+
+        .nav-tabs { border: none; margin-top: 20px; justify-content: center; gap: 10px; }
+        .nav-link { border: none !important; border-radius: 20px !important; color: var(--text); opacity: 0.6; padding: 8px 18px; background: rgba(0,0,0,0.05); }
+        .nav-link.active { background: var(--primary) !important; color: white !important; opacity: 1; }
+
+        .task-card { background: var(--card); border-radius: 20px; padding: 15px; margin-bottom: 12px; display: flex; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); transition: 0.3s; }
         .v-check { width: 34px; height: 34px; border-radius: 10px; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: 15px; flex-shrink: 0; }
         .v-check.checked { background: #22c55e; border-color: #22c55e; color: white; }
         .task-info { flex-grow: 1; min-width: 0; cursor: pointer; }
         .task-title { font-weight: 700; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .completed { opacity: 0.5; background: rgba(0,0,0,0.02); }
         .completed .task-title { text-decoration: line-through; }
+
         .floating-input { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: var(--card); padding: 20px; border-radius: 25px 25px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.1); z-index: 1000; }
         #setupOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .user-opt { width: 100%; max-width: 300px; padding: 18px; border-radius: 20px; margin-bottom: 15px; border: 2px solid #ddd; text-align: center; cursor: pointer; font-weight: 800; background: var(--card); }
@@ -32,10 +39,10 @@
 <body>
 
 <div id="setupOverlay" style="display: none;">
-    <h3 class="mb-4">מי משתמש עכשיו?</h3>
+    <h3 class="mb-4 fw-bold">מי המשתמש עכשיו?</h3>
     <div class="user-opt" style="border-color: var(--yoni); color: var(--yoni);" onclick="setupUser('יוני')">יוני 🧔</div>
     <div class="user-opt" style="border-color: var(--ina); color: var(--ina);" onclick="setupUser('אינה')">אינה 👩‍🎨</div>
-    <input type="password" id="firstToken" class="form-control mt-3 rounded-pill text-center" placeholder="הדבק טוקן (חד-פעמי)">
+    <input type="password" id="firstToken" class="form-control mt-3 rounded-pill text-center" placeholder="הדבק טוקן גיטהאב">
 </div>
 
 <div class="app-header">
@@ -43,7 +50,7 @@
         <span id="userBadge"></span>
         <span onclick="logout()" style="cursor:pointer">החלף משתמש <i class="bi bi-arrow-repeat"></i></span>
     </div>
-    <h4 class="fw-bold">ליגת המטלות 🏠</h4>
+    <h4 class="fw-bold">ליגת המטלות 🏆</h4>
     <div class="leaderboard">
         <div id="card-יוני" class="score-pill">
             <span class="crown">👑</span><small>יוני</small><br><span id="scoreYoni" class="h3 fw-bold">0</span>
@@ -52,10 +59,20 @@
             <span class="crown">👑</span><small>אינה</small><br><span id="scoreIna" class="h3 fw-bold">0</span>
         </div>
     </div>
+
+    <ul class="nav nav-tabs" id="filterTabs">
+        <li class="nav-item"><a class="nav-link active" href="#" onclick="setFilter('all')">הכל</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="setFilter('open')">פתוחות</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="setFilter('mine')">שלי</a></li>
+    </ul>
 </div>
 
 <div class="container mt-4" style="max-width: 500px;">
-    <div id="taskList"><p class="text-center opacity-50 py-5">טוען משימות...</p></div>
+    <div class="d-flex justify-content-between align-items-center mb-3 px-2">
+        <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold" onclick="checkAllOpen()">סמן הכל כבוצע ✅</button>
+        <span id="taskCount" class="small opacity-50"></span>
+    </div>
+    <div id="taskList"></div>
     <div id="status-msg" class="text-center small opacity-50 mt-2"></div>
 </div>
 
@@ -71,6 +88,7 @@
     const REPO = "yonathanohayon-oss/house-keeping-v2";
     const FILE_PATH = "tasks.json";
     let allTasks = [];
+    let currentFilter = 'all';
     let currentUser = localStorage.getItem('app_user');
 
     function setupUser(user) {
@@ -83,43 +101,52 @@
 
     function logout() { localStorage.removeItem('app_user'); location.reload(); }
 
+    function setFilter(f) {
+        currentFilter = f;
+        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+        event.target.classList.add('active');
+        renderUI();
+    }
+
     async function fetchTasks() {
         if (!currentUser) { document.getElementById('setupOverlay').style.display = 'flex'; return; }
         document.getElementById('userBadge').innerText = "שלום, " + currentUser;
-        
         const token = localStorage.getItem('gh_token');
         try {
             const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${Date.now()}`, {
                 headers: { 'Authorization': `token ${token}` }
             });
-            if (!res.ok) throw new Error();
             const data = await res.json();
-            const content = decodeURIComponent(escape(atob(data.content)));
-            allTasks = JSON.parse(content || "[]");
+            allTasks = JSON.parse(decodeURIComponent(escape(atob(data.content))) || "[]");
             renderUI();
-        } catch (e) {
-            document.getElementById('taskList').innerHTML = "שגיאת חיבור. וודא שהטוקן תקין.";
-        }
+        } catch (e) { document.getElementById('status-msg').innerText = "שגיאת טעינה"; }
     }
 
     function renderUI() {
         const list = document.getElementById('taskList');
-        list.innerHTML = allTasks.length ? '' : '<p class="text-center py-5 opacity-50">אין משימות. טען משימות שבועיות!</p>';
+        let filtered = allTasks;
+        
+        if (currentFilter === 'open') filtered = allTasks.filter(t => !t.done);
+        if (currentFilter === 'mine') filtered = allTasks.filter(t => t.user === currentUser);
+
+        list.innerHTML = filtered.length ? '' : '<p class="text-center py-5 opacity-50">אין משימות כאן...</p>';
+        document.getElementById('taskCount').innerText = `${filtered.length} משימות`;
         
         let s = { 'יוני': 0, 'אינה': 0 };
-        allTasks.sort((a,b) => a.done - b.done).forEach((task, index) => {
-            if (task.done) s[task.user] = (s[task.user] || 0) + parseInt(task.points || 5);
-            
+        allTasks.forEach(t => { if (t.done) s[t.user] = (s[t.user] || 0) + parseInt(t.points || 5); });
+
+        filtered.sort((a,b) => a.done - b.done).forEach((task, index) => {
+            const originalIndex = allTasks.indexOf(task);
             list.innerHTML += `
                 <div class="task-card ${task.done ? 'completed' : ''}">
-                    <div class="v-check ${task.done ? 'checked' : ''}" onclick="toggleTask(${index})">
+                    <div class="v-check ${task.done ? 'checked' : ''}" onclick="toggleTask(${originalIndex})">
                         <i class="bi ${task.done ? 'bi-check-lg' : ''}"></i>
                     </div>
-                    <div class="task-info" onclick="toggleTask(${index})">
+                    <div class="task-info" onclick="toggleTask(${originalIndex})">
                         <span class="task-title">${task.title}</span>
                         <small class="text-primary fw-bold">${task.points || 5} נק' ${task.done ? '• ' + task.user : ''}</small>
                     </div>
-                    <i class="bi bi-trash ms-2 opacity-25" onclick="deleteTask(${index})"></i>
+                    <i class="bi bi-trash ms-2 opacity-25" onclick="deleteTask(${originalIndex})"></i>
                 </div>`;
         });
 
@@ -129,41 +156,45 @@
         document.getElementById('card-אינה').classList.toggle('winner', s['אינה'] > s['יוני'] && s['אינה'] > 0);
     }
 
+    async function checkAllOpen() {
+        if(!confirm("לסמן את כל המשימות הפתוחות כבוצעו על שמך?")) return;
+        allTasks.forEach(t => {
+            if(!t.done) { t.done = true; t.user = currentUser; }
+        });
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+        await updateGithub();
+    }
+
     async function toggleTask(index) {
         allTasks[index].done = !allTasks[index].done;
         allTasks[index].user = allTasks[index].done ? currentUser : null;
-        if (allTasks[index].done) confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+        if (allTasks[index].done) confetti({ particleCount: 60, spread: 50, origin: { y: 0.7 } });
         await updateGithub();
     }
 
     async function addTask() {
         const t = document.getElementById('taskInput').value;
         if (!t) return;
-        allTasks.unshift({ title: t, points: 5, done: false, user: null });
+        allTasks.unshift({ title: t, points: 5, done: false, user: null, date: new Date().toLocaleDateString('he-IL') });
         await updateGithub();
         document.getElementById('taskInput').value = '';
     }
 
     async function addWeeklyChores() {
-        const weekly = [
-            {title:"שטיפת רצפה", points:10}, {title:"ניקוי מזגן", points:8},
-            {title:"החלפת מצעים", points:8}, {title:"סידור חדר מיה", points:7},
-            {title:"זבל ומיחזור", points:3}, {title:"הפעלת מדיח", points:5}
-        ];
-        weekly.forEach(c => allTasks.push({...c, done:false, user:null}));
+        const weekly = [{title:"שטיפת רצפה", points:10}, {title:"ניקוי מזגן", points:8}, {title:"החלפת מצעים", points:8}, {title:"סידור חדר מיה", points:7}, {title:"זבל ומיחזור", points:3}, {title:"הפעלת מדיח", points:5}];
+        weekly.forEach(c => allTasks.push({...c, done:false, user:null, date: new Date().toLocaleDateString('he-IL')}));
         await updateGithub();
     }
 
     async function updateGithub() {
         const token = localStorage.getItem('gh_token');
-        document.getElementById('status-msg').innerText = "שומר...";
+        document.getElementById('status-msg').innerText = "מעדכן ענן...";
         try {
             const check = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${Date.now()}`, {
                 headers: { 'Authorization': `token ${token}` }
             });
             const checkData = await check.json();
             const content = btoa(unescape(encodeURIComponent(JSON.stringify(allTasks, null, 2))));
-            
             await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
@@ -171,7 +202,7 @@
             });
             fetchTasks();
             document.getElementById('status-msg').innerText = "נשמר ✅";
-        } catch (e) { document.getElementById('status-msg').innerText = "שגיאת שמירה"; }
+        } catch (e) { document.getElementById('status-msg').innerText = "שגיאה בשמירה"; }
     }
 
     async function deleteTask(index) { if(confirm('למחוק?')) { allTasks.splice(index, 1); await updateGithub(); } }
