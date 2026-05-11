@@ -1,115 +1,27 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ניהול מטלות - אינה ויניב</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f0f2f5; padding-top: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .container { max-width: 500px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .task-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 12px 0; }
-        .btn-add { background-color: #0088cc; color: white; border-radius: 10px; }
-        .status { font-size: 0.8rem; color: #666; text-align: center; margin-top: 10px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2 class="text-center mb-4">מטלות הבית 🏠</h2>
-        
-        <div class="mb-3">
-            <input type="password" id="ghToken" class="form-control mb-2" placeholder="הדבק כאן את ה-Token (פעם אחת)">
-            <div class="input-group">
-                <input type="text" id="taskInput" class="form-control" placeholder="מה המטלה?">
-                <select id="userSelect" class="form-select" style="max-width: 90px;">
-                    <option value="יניב">יניב</option>
-                    <option value="אינה">אינה</option>
-                </select>
-                <button class="btn btn-add" onclick="addTask()">הוסף</button>
-            </div>
-        </div>
-
-        <div id="taskList">
-            <p class="text-center">טוען מטלות מגיטהאב...</p>
-        </div>
-        <div id="status" class="status"></div>
-    </div>
-
-    <script>
-        const REPO = "yonathanohayon-oss/house-keeping-v2"; // שים לב! תחליף את זה לשם המשתמש והריפו שלך
-        const FILE_PATH = "tasks.json";
-        let sha = ""; // גיטהאב צריך את זה כדי לעדכן קובץ
-
-        // טעינת מטלות ראשונית
-        async function fetchTasks() {
-            const token = document.getElementById('ghToken').value || localStorage.getItem('gh_token');
-            if (!token) return;
-            
-            try {
-                const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
-                    headers: { 'Authorization': `token ${token}` }
-                });
-                const data = await res.json();
-                sha = data.sha;
-                const tasks = JSON.parse(atob(data.content));
-                renderTasks(tasks);
-            } catch (e) { console.error("Error loading tasks", e); }
-        }
-
-        function renderTasks(tasks) {
-            const list = document.getElementById('taskList');
-            list.innerHTML = tasks.length ? '' : '<p class="text-center">אין מטלות! 🎉</p>';
-            tasks.forEach((task, index) => {
-                list.innerHTML += `
-                    <div class="task-item">
-                        <span><strong>${task.user}:</strong> ${task.title}</span>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(${index}, ${JSON.stringify(tasks).replace(/"/g, '&quot;')})">🗑️</button>
-                    </div>`;
-            });
-        }
-
-        async function addTask() {
-            const token = document.getElementById('ghToken').value;
-            const title = document.getElementById('taskInput').value;
-            const user = document.getElementById('userSelect').value;
-            if (!token || !title) { alert("חובה להזין טוקן ומטלה"); return; }
-            
-            localStorage.setItem('gh_token', token); // שמירה מקומית כדי שלא תצטרך להזין שוב
-            
-            // טעינת הרשימה הקיימת, הוספה ושמירה
-            const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
-                headers: { 'Authorization': `token ${token}` }
-            });
-            const data = await res.json();
-            const tasks = JSON.parse(atob(data.content));
-            tasks.push({ title, user });
-
-            updateGithub(tasks, token, data.sha);
-        }
-
-        async function updateGithub(newTasks, token, currentSha) {
+async function updateGithub(newTasks, token, currentSha) {
             document.getElementById('status').innerText = "שומר בגיטהאב...";
+            
+            // המרה נכונה ל-Base64 שתומכת בעברית (UTF-8)
+            const jsonString = JSON.stringify(newTasks, null, 2);
+            const bytes = new TextEncoder().encode(jsonString);
+            const base64Content = btoa(String.fromCharCode(...bytes));
+
             const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: "Update tasks via App",
-                    content: btoa(unescape(encodeURIComponent(JSON.stringify(newTasks, null, 2)))),
+                    content: base64Content,
                     sha: currentSha
                 })
             });
+
             if (res.ok) {
                 document.getElementById('status').innerText = "נשמר בהצלחה!";
                 document.getElementById('taskInput').value = '';
                 fetchTasks();
+            } else {
+                const err = await res.json();
+                document.getElementById('status').innerText = "שגיאה: " + err.message;
             }
         }
-
-        // טעינה אוטומטית אם הטוקן שמור
-        if (localStorage.getItem('gh_token')) {
-            document.getElementById('ghToken').value = localStorage.getItem('gh_token');
-            fetchTasks();
-        }
-    </script>
-</body>
-</html>
