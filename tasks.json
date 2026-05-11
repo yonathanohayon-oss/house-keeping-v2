@@ -6,16 +6,16 @@
     "user": null
   },
   {
-    "title": "זבל ומיחזור",
-    "points": 3,
+    "title": "מדיח",
+    "points": 5,
     "done": true,
     "user": "יוני"
   },
   {
-    "title": "מדיח",
-    "points": 5,
-    "done": false,
-    "user": null
+    "title": "זבל ומיחזור",
+    "points": 3,
+    "done": true,
+    "user": "יוני"
   },
   {
     "title": "חדר מיה",
