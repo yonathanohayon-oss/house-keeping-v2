@@ -3,55 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>הבית של יוני ואינה</title>
+    <title>הבית של יוני ואינה - Game Mode</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        :root { --primary-color: #0088cc; --ina-color: #e91e63; --yoni-color: #2196f3; }
-        body { background-color: #f4f7f6; font-family: 'Segoe UI', system-ui, sans-serif; padding-bottom: 50px; }
-        .app-container { max-width: 500px; margin: 20px auto; background: white; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); overflow: hidden; }
-        .header { background: linear-gradient(135deg, var(--primary-color), #005f91); color: white; padding: 30px 20px; text-align: center; }
+        :root { --primary: #6366f1; --ina: #ec4899; --yoni: #0ea5e9; --success: #22c55e; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; padding-bottom: 100px; }
+        .app-container { max-width: 500px; margin: 20px auto; background: white; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.05); overflow: hidden; }
+        .header { background: linear-gradient(135deg, var(--primary), #4338ca); color: white; padding: 30px 20px; text-align: center; }
+        .score-board { display: flex; justify-content: space-around; background: rgba(255,255,255,0.1); margin-top: 15px; padding: 10px; border-radius: 15px; }
         .content { padding: 20px; }
-        .task-card { background: #fff; border: 1px solid #edf2f7; border-radius: 15px; padding: 15px; margin-bottom: 12px; display: flex; align-items: center; transition: transform 0.2s; }
-        .task-card:active { transform: scale(0.98); }
-        .user-badge { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-left: 15px; }
-        .badge-yoni { background-color: var(--yoni-color); }
-        .badge-ina { background-color: var(--ina-color); }
-        .task-text { flex-grow: 1; font-size: 1.1rem; }
-        .task-text.done { text-decoration: line-through; color: #a0aec0; }
-        .btn-action { border: none; background: none; font-size: 1.2rem; padding: 5px; cursor: pointer; }
-        .status-bar { font-size: 0.85rem; color: #718096; text-align: center; margin-top: 15px; }
-        .input-section { background: #fff; border-top: 1px solid #edf2f7; padding: 20px; position: sticky; bottom: 0; }
+        .task-card { background: #fff; border: 1px solid #f1f5f9; border-radius: 20px; padding: 15px; margin-bottom: 12px; display: flex; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+        .user-badge { width: 45px; height: 45px; border-radius: 15px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-left: 15px; font-size: 1.2rem; }
+        .badge-yoni { background: var(--yoni); box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3); }
+        .badge-ina { background: var(--ina); box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3); }
+        .task-info { flex-grow: 1; }
+        .task-title { font-size: 1.05rem; font-weight: 500; display: block; }
+        .task-points { font-size: 0.8rem; color: var(--primary); font-weight: bold; background: #eef2ff; padding: 2px 8px; border-radius: 10px; }
+        .done .task-title { text-decoration: line-through; color: #94a3b8; }
+        .input-section { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: white; padding: 20px; border-top: 1px solid #f1f5f9; box-shadow: 0 -10px 20px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <div class="header">
-        <h2 class="mb-0">המטלות שלנו 🏠</h2>
-        <p class="opacity-75 mb-0">יוני & אינה</p>
+        <h2 class="mb-1">הליגה של יוני ואינה 🏆</h2>
+        <div class="score-board">
+            <div><small>יוני</small><br><strong id="scoreYoni">0</strong></div>
+            <div style="border-left: 1px solid rgba(255,255,255,0.3);"></div>
+            <div><small>אינה</small><br><strong id="scoreIna">0</strong></div>
+        </div>
     </div>
 
     <div class="content">
-        <div id="tokenSection" class="mb-4" style="display:none;">
-            <input type="password" id="ghToken" class="form-control rounded-pill" placeholder="הכנס טוקן גיטהאב">
-        </div>
-
         <div id="taskList">
             <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
         </div>
-        <div id="status" class="status-bar"></div>
+        <div id="status" class="text-center small text-muted mt-3"></div>
     </div>
 
     <div class="input-section">
-        <div class="input-group">
+        <div class="input-group mb-2">
             <select id="userSelect" class="form-select rounded-start-pill" style="max-width: 85px;">
                 <option value="יוני">יוני</option>
                 <option value="אינה">אינה</option>
             </select>
             <input type="text" id="taskInput" class="form-control" placeholder="מטלה חדשה...">
-            <button class="btn btn-primary rounded-end-pill px-4" onclick="addTask()"><i class="bi bi-plus-lg"></i></button>
+            <input type="number" id="pointsInput" class="form-control" style="max-width: 70px;" value="5" min="1" max="10">
+            <button class="btn btn-primary rounded-end-pill px-3" onclick="addTask()"><i class="bi bi-send"></i></button>
         </div>
+        <button class="btn btn-sm btn-outline-secondary w-100 rounded-pill" onclick="addWeeklyChores()">
+            <i class="bi bi-calendar-check"></i> הוסף מטלות שבועיות קבועות
+        </button>
     </div>
 </div>
 
@@ -61,9 +65,18 @@
     let sha = "";
     let allTasks = [];
 
+    const WEEKLY_CHORES = [
+        { title: "ניקוי מסננים במזגן", points: 10, user: "יוני" },
+        { title: "החלפת מצעים", points: 8, user: "אינה" },
+        { title: "שטיפת רצפה יסודית", points: 10, user: "יוני" },
+        { title: "ניקוי המקרר", points: 7, user: "אינה" },
+        { title: "טיפול בגינה/עציצים", points: 5, user: "יוני" }
+    ];
+
     async function fetchTasks() {
-        const token = document.getElementById('ghToken').value || localStorage.getItem('gh_token');
-        if (!token) { document.getElementById('tokenSection').style.display = 'block'; return; }
+        const token = localStorage.getItem('gh_token') || prompt("אנא הכנס טוקן גיטהאב:");
+        if (!token) return;
+        localStorage.setItem('gh_token', token);
         
         try {
             const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
@@ -71,16 +84,24 @@
             });
             const data = await res.json();
             sha = data.sha;
-            
-            const decoded = new TextDecoder('utf-8').decode(new Uint8Array(atob(data.content).split("").map(c => c.charCodeAt(0))));
-            allTasks = JSON.parse(decoded);
+            allTasks = JSON.parse(new TextDecoder('utf-8').decode(new Uint8Array(atob(data.content).split("").map(c => c.charCodeAt(0)))));
             renderTasks();
+            calculateScores();
         } catch (e) { console.error(e); }
+    }
+
+    function calculateScores() {
+        const scores = { 'יוני': 0, 'אינה': 0 };
+        allTasks.filter(t => t.done).forEach(t => {
+            scores[t.user] = (scores[t.user] || 0) + parseInt(t.points || 0);
+        });
+        document.getElementById('scoreYoni').innerText = scores['יוני'];
+        document.getElementById('scoreIna').innerText = scores['אינה'];
     }
 
     function renderTasks() {
         const list = document.getElementById('taskList');
-        list.innerHTML = allTasks.length ? '' : '<p class="text-center text-muted py-4">הכל נקי! אין מטלות 🎉</p>';
+        list.innerHTML = allTasks.length ? '' : '<p class="text-center text-muted py-4">הכל נקי! איפה כולם? 🎉</p>';
         
         allTasks.forEach((task, index) => {
             const badgeClass = task.user === 'יוני' ? 'badge-yoni' : 'badge-ina';
@@ -88,34 +109,38 @@
             const checkIcon = task.done ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted';
             
             list.innerHTML += `
-                <div class="task-card">
+                <div class="task-card ${doneClass}">
                     <div class="user-badge ${badgeClass}">${task.user[0]}</div>
-                    <div class="task-text ${doneClass}" onclick="toggleDone(${index})">${task.title}</div>
-                    <button class="btn-action me-2" onclick="toggleDone(${index})"><i class="bi ${checkIcon}"></i></button>
-                    <button class="btn-action text-danger" onclick="deleteTask(${index})"><i class="bi bi-trash3"></i></button>
+                    <div class="task-info" onclick="toggleDone(${index})">
+                        <span class="task-title">${task.title}</span>
+                        <span class="task-points">${task.points} נק'</span>
+                    </div>
+                    <button class="btn-action border-0 bg-transparent text-danger" onclick="deleteTask(${index})"><i class="bi bi-trash3"></i></button>
                 </div>`;
         });
     }
 
+    function addWeeklyChores() {
+        WEEKLY_CHORES.forEach(chore => allTasks.push({ ...chore, done: false, date: new Date().toISOString() }));
+        updateGithub();
+    }
+
     async function addTask() {
         const title = document.getElementById('taskInput').value;
+        const points = document.getElementById('pointsInput').value;
         const user = document.getElementById('userSelect').value;
-        const token = document.getElementById('ghToken').value || localStorage.getItem('gh_token');
-        if (!title || !token) return;
-
-        localStorage.setItem('gh_token', token);
-        allTasks.push({ title, user, done: false, date: new Date().toISOString() });
+        if (!title) return;
+        allTasks.push({ title, user, points, done: false, date: new Date().toISOString() });
         updateGithub();
     }
 
     function toggleDone(index) {
         allTasks[index].done = !allTasks[index].done;
-        renderTasks();
         updateGithub();
     }
 
     function deleteTask(index) {
-        if(confirm('למחוק את המטלה?')) {
+        if(confirm('למחוק?')) {
             allTasks.splice(index, 1);
             updateGithub();
         }
@@ -123,15 +148,14 @@
 
     async function updateGithub() {
         const token = localStorage.getItem('gh_token');
-        document.getElementById('status').innerText = "מעדכן ענן...";
-        
+        document.getElementById('status').innerText = "מעדכן תוצאות...";
         const bytes = new TextEncoder().encode(JSON.stringify(allTasks, null, 2));
         const base64Content = btoa(String.fromCharCode(...bytes));
 
         const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
             method: 'PUT',
             headers: { 'Authorization': `token ${token}` },
-            body: JSON.stringify({ message: "Update via HomeApp", content: base64Content, sha: sha })
+            body: JSON.stringify({ message: "Score Update", content: base64Content, sha: sha })
         });
 
         if (res.ok) {
@@ -140,6 +164,7 @@
             document.getElementById('status').innerText = "הסתנכרן בהצלחה ✅";
             document.getElementById('taskInput').value = '';
             renderTasks();
+            calculateScores();
         }
     }
 
