@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ליגת המטלות - יוני ואינה 🏠</title>
+    <title>ליגת המטלות - יוני ואינה 🏆</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --yoni: #0ea5e9; --ina: #ec4899; --primary: #6366f1; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
         @media (prefers-color-scheme: dark) { :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; } }
-        body { background-color: var(--bg); color: var(--text); font-family: system-ui, sans-serif; padding-bottom: 220px; transition: 0.3s; }
+        body { background-color: var(--bg); color: var(--text); font-family: system-ui, sans-serif; padding-bottom: 220px; transition: 0.3s; overflow-x: hidden; }
         
         .app-header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 25px; border-radius: 0 0 35px 35px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         .leaderboard { display: flex; justify-content: center; gap: 15px; margin-top: 15px; }
@@ -31,12 +31,22 @@
         .completed { opacity: 0.5; background: rgba(0,0,0,0.02); }
         .completed .task-title { text-decoration: line-through; }
 
+        /* V Animation Overlay */
+        #success-v {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            font-size: 150px; color: #22c55e; z-index: 2000; pointer-events: none;
+            text-shadow: 0 0 30px rgba(34, 197, 94, 0.5); transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #success-v.show { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+
         .floating-input { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: var(--card); padding: 20px; border-radius: 25px 25px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.1); z-index: 1000; }
         #setupOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .user-opt { width: 100%; max-width: 300px; padding: 18px; border-radius: 20px; margin-bottom: 15px; border: 2px solid #ddd; text-align: center; cursor: pointer; font-weight: 800; background: var(--card); }
     </style>
 </head>
 <body>
+
+<div id="success-v">🏆</div>
 
 <div id="setupOverlay" style="display: none;">
     <h3 class="mb-4 fw-bold">מי המשתמש עכשיו?</h3>
@@ -46,11 +56,11 @@
 </div>
 
 <div class="app-header">
-    <div class="d-flex justify-content-between small opacity-75 mb-2">
+    <div class="d-flex justify-content-between small opacity-75 mb-2 px-2">
         <span id="userBadge"></span>
         <span onclick="logout()" style="cursor:pointer">החלף משתמש <i class="bi bi-arrow-repeat"></i></span>
     </div>
-    <h4 class="fw-bold">ליגת המטלות 🏆</h4>
+    <h4 class="fw-bold">ליגת המטלות 🏠</h4>
     <div class="leaderboard">
         <div id="card-יוני" class="score-pill">
             <span class="crown">👑</span><small>יוני</small><br><span id="scoreYoni" class="h3 fw-bold">0</span>
@@ -59,7 +69,6 @@
             <span class="crown">👑</span><small>אינה</small><br><span id="scoreIna" class="h3 fw-bold">0</span>
         </div>
     </div>
-
     <ul class="nav nav-tabs" id="filterTabs">
         <li class="nav-item"><a class="nav-link active" href="#" onclick="setFilter('all')">הכל</a></li>
         <li class="nav-item"><a class="nav-link" href="#" onclick="setFilter('open')">פתוחות</a></li>
@@ -69,7 +78,7 @@
 
 <div class="container mt-4" style="max-width: 500px;">
     <div class="d-flex justify-content-between align-items-center mb-3 px-2">
-        <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold" onclick="checkAllOpen()">סמן הכל כבוצע ✅</button>
+        <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-sm" onclick="checkAllOpen()">סמן הכל כבוצע ✅</button>
         <span id="taskCount" class="small opacity-50"></span>
     </div>
     <div id="taskList"></div>
@@ -78,10 +87,10 @@
 
 <div class="floating-input">
     <div class="input-group mb-2">
-        <input type="text" id="taskInput" class="form-control rounded-start-pill px-3" placeholder="משימה חדשה...">
-        <button class="btn btn-primary rounded-end-pill px-4" onclick="addTask()"><i class="bi bi-plus-lg"></i></button>
+        <input type="text" id="taskInput" class="form-control rounded-start-pill px-3 shadow-none border-light bg-light" placeholder="משימה חדשה...">
+        <button class="btn btn-primary rounded-end-pill px-4 fw-bold" onclick="addTask()">+</button>
     </div>
-    <button class="btn btn-outline-primary w-100 rounded-pill btn-sm fw-bold" onclick="addWeeklyChores()">טען משימות שבועיות</button>
+    <button class="btn btn-outline-primary w-100 rounded-pill btn-sm fw-bold border-2" onclick="addWeeklyChores()">טען משימות שבועיות 🪄</button>
 </div>
 
 <script>
@@ -104,8 +113,15 @@
     function setFilter(f) {
         currentFilter = f;
         document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-        event.target.classList.add('active');
+        event.currentTarget.classList.add('active');
         renderUI();
+    }
+
+    function triggerSuccess() {
+        const v = document.getElementById('success-v');
+        v.classList.add('show');
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#22c55e', '#6366f1', '#fbbf24'] });
+        setTimeout(() => { v.classList.remove('show'); }, 1000);
     }
 
     async function fetchTasks() {
@@ -125,17 +141,15 @@
     function renderUI() {
         const list = document.getElementById('taskList');
         let filtered = allTasks;
-        
         if (currentFilter === 'open') filtered = allTasks.filter(t => !t.done);
         if (currentFilter === 'mine') filtered = allTasks.filter(t => t.user === currentUser);
-
-        list.innerHTML = filtered.length ? '' : '<p class="text-center py-5 opacity-50">אין משימות כאן...</p>';
+        list.innerHTML = filtered.length ? '' : '<p class="text-center py-5 opacity-50">הכל נקי כאן! ✨</p>';
         document.getElementById('taskCount').innerText = `${filtered.length} משימות`;
         
         let s = { 'יוני': 0, 'אינה': 0 };
         allTasks.forEach(t => { if (t.done) s[t.user] = (s[t.user] || 0) + parseInt(t.points || 5); });
 
-        filtered.sort((a,b) => a.done - b.done).forEach((task, index) => {
+        filtered.sort((a,b) => a.done - b.done).forEach((task) => {
             const originalIndex = allTasks.indexOf(task);
             list.innerHTML += `
                 <div class="task-card ${task.done ? 'completed' : ''}">
@@ -146,49 +160,51 @@
                         <span class="task-title">${task.title}</span>
                         <small class="text-primary fw-bold">${task.points || 5} נק' ${task.done ? '• ' + task.user : ''}</small>
                     </div>
-                    <i class="bi bi-trash ms-2 opacity-25" onclick="deleteTask(${originalIndex})"></i>
+                    <i class="bi bi-trash ms-2 opacity-10" onclick="deleteTask(${originalIndex})"></i>
                 </div>`;
         });
-
-        document.getElementById('scoreYoni').innerText = s['יוני'] || 0;
-        document.getElementById('scoreIna').innerText = s['אינה'] || 0;
+        document.getElementById('scoreYoni').innerText = s['יוני'];
+        document.getElementById('scoreIna').innerText = s['אינה'];
         document.getElementById('card-יוני').classList.toggle('winner', s['יוני'] > s['אינה'] && s['יוני'] > 0);
         document.getElementById('card-אינה').classList.toggle('winner', s['אינה'] > s['יוני'] && s['אינה'] > 0);
     }
 
     async function checkAllOpen() {
-        if(!confirm("לסמן את כל המשימות הפתוחות כבוצעו על שמך?")) return;
-        allTasks.forEach(t => {
-            if(!t.done) { t.done = true; t.user = currentUser; }
-        });
-        confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+        if(!confirm("לסמן את הכל כבוצע?")) return;
+        allTasks.forEach(t => { if(!t.done) { t.done = true; t.user = currentUser; } });
+        triggerSuccess();
         await updateGithub();
     }
 
     async function toggleTask(index) {
-        allTasks[index].done = !allTasks[index].done;
-        allTasks[index].user = allTasks[index].done ? currentUser : null;
-        if (allTasks[index].done) confetti({ particleCount: 60, spread: 50, origin: { y: 0.7 } });
+        if (!allTasks[index].done) {
+            allTasks[index].done = true;
+            allTasks[index].user = currentUser;
+            triggerSuccess();
+        } else {
+            allTasks[index].done = false;
+            allTasks[index].user = null;
+        }
         await updateGithub();
     }
 
     async function addTask() {
         const t = document.getElementById('taskInput').value;
         if (!t) return;
-        allTasks.unshift({ title: t, points: 5, done: false, user: null, date: new Date().toLocaleDateString('he-IL') });
+        allTasks.unshift({ title: t, points: 5, done: false, user: null });
         await updateGithub();
         document.getElementById('taskInput').value = '';
     }
 
     async function addWeeklyChores() {
-        const weekly = [{title:"שטיפת רצפה", points:10}, {title:"ניקוי מזגן", points:8}, {title:"החלפת מצעים", points:8}, {title:"סידור חדר מיה", points:7}, {title:"זבל ומיחזור", points:3}, {title:"הפעלת מדיח", points:5}];
-        weekly.forEach(c => allTasks.push({...c, done:false, user:null, date: new Date().toLocaleDateString('he-IL')}));
+        const weekly = [{title:"שטיפת רצפה", points:10}, {title:"ניקוי מזגן", points:8}, {title:"החלפת מצעים", points:8}, {title:"חדר מיה", points:7}, {title:"זבל", points:3}, {title:"מדיח", points:5}];
+        weekly.forEach(c => allTasks.push({...c, done:false, user:null}));
         await updateGithub();
     }
 
     async function updateGithub() {
         const token = localStorage.getItem('gh_token');
-        document.getElementById('status-msg').innerText = "מעדכן ענן...";
+        document.getElementById('status-msg').innerText = "מסנכרן...";
         try {
             const check = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}?t=${Date.now()}`, {
                 headers: { 'Authorization': `token ${token}` }
@@ -202,7 +218,7 @@
             });
             fetchTasks();
             document.getElementById('status-msg').innerText = "נשמר ✅";
-        } catch (e) { document.getElementById('status-msg').innerText = "שגיאה בשמירה"; }
+        } catch (e) { document.getElementById('status-msg').innerText = "שגיאת שמירה"; }
     }
 
     async function deleteTask(index) { if(confirm('למחוק?')) { allTasks.splice(index, 1); await updateGithub(); } }
