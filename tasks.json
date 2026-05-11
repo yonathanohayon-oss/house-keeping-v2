@@ -6,22 +6,22 @@
     "user": null
   },
   {
-    "title": "חדר מיה",
-    "points": 7,
-    "done": true,
-    "user": "יוני"
-  },
-  {
     "title": "זבל ומיחזור",
     "points": 3,
-    "done": false,
-    "user": null
+    "done": true,
+    "user": "יוני"
   },
   {
     "title": "מדיח",
     "points": 5,
     "done": false,
     "user": null
+  },
+  {
+    "title": "חדר מיה",
+    "points": 7,
+    "done": true,
+    "user": "יוני"
   },
   {
     "title": "פילטרים מזגן",
