@@ -3,119 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ניהול מטלות - יוני ואינה</title>
+    <title>הבית של יוני ואינה</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f0f2f5; padding-top: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .container { max-width: 500px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .task-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 12px 0; }
-        .btn-add { background-color: #0088cc; color: white; border-radius: 10px; }
+        :root { --primary-color: #0088cc; --ina-color: #e91e63; --yoni-color: #2196f3; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', system-ui, sans-serif; padding-bottom: 50px; }
+        .app-container { max-width: 500px; margin: 20px auto; background: white; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); overflow: hidden; }
+        .header { background: linear-gradient(135deg, var(--primary-color), #005f91); color: white; padding: 30px 20px; text-align: center; }
+        .content { padding: 20px; }
+        .task-card { background: #fff; border: 1px solid #edf2f7; border-radius: 15px; padding: 15px; margin-bottom: 12px; display: flex; align-items: center; transition: transform 0.2s; }
+        .task-card:active { transform: scale(0.98); }
+        .user-badge { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-left: 15px; }
+        .badge-yoni { background-color: var(--yoni-color); }
+        .badge-ina { background-color: var(--ina-color); }
+        .task-text { flex-grow: 1; font-size: 1.1rem; }
+        .task-text.done { text-decoration: line-through; color: #a0aec0; }
+        .btn-action { border: none; background: none; font-size: 1.2rem; padding: 5px; cursor: pointer; }
+        .status-bar { font-size: 0.85rem; color: #718096; text-align: center; margin-top: 15px; }
+        .input-section { background: #fff; border-top: 1px solid #edf2f7; padding: 20px; position: sticky; bottom: 0; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2 class="text-center mb-4">מטלות הבית 🏠</h2>
-        
-        <div class="mb-3">
-            <input type="password" id="ghToken" class="form-control mb-2" placeholder="הדבק כאן את ה-Token">
-            <div class="input-group">
-                <input type="text" id="taskInput" class="form-control" placeholder="מה המטלה?">
-                <select id="userSelect" class="form-select" style="max-width: 90px;">
-                    <option value="יוני">יוני</option>
-                    <option value="אינה">אינה</option>
-                </select>
-                <button class="btn btn-add" onclick="addTask()">הוסף</button>
-            </div>
-        </div>
 
-        <div id="taskList"></div>
-        <div id="status" class="text-center mt-3 small text-muted"></div>
+<div class="app-container">
+    <div class="header">
+        <h2 class="mb-0">המטלות שלנו 🏠</h2>
+        <p class="opacity-75 mb-0">יוני & אינה</p>
     </div>
 
-    <script>
-        const REPO = "yonathanohayon-oss/house-keeping-v2";
-        const FILE_PATH = "tasks.json";
-        let sha = "";
+    <div class="content">
+        <div id="tokenSection" class="mb-4" style="display:none;">
+            <input type="password" id="ghToken" class="form-control rounded-pill" placeholder="הכנס טוקן גיטהאב">
+        </div>
 
-        async function fetchTasks() {
-            const token = document.getElementById('ghToken').value || localStorage.getItem('gh_token');
-            if (!token) return;
-            
-            try {
-                const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
-                    headers: { 'Authorization': `token ${token}`, 'Cache-Control': 'no-cache' }
-                });
-                const data = await res.json();
-                sha = data.sha;
-                
-                const binaryString = atob(data.content);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                    bytes[i] = binaryString.charCodeAt(i);
-                }
-                const decodedText = new TextDecoder('utf-8').decode(bytes);
-                renderTasks(JSON.parse(decodedText));
-            } catch (e) { console.error("Error loading tasks", e); }
-        }
+        <div id="taskList">
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        </div>
+        <div id="status" class="status-bar"></div>
+    </div>
 
-        function renderTasks(tasks) {
-            const list = document.getElementById('taskList');
-            list.innerHTML = tasks.length ? '' : '<p class="text-center">אין מטלות! 🎉</p>';
-            tasks.forEach((task, index) => {
-                const tasksJson = JSON.stringify(tasks).replace(/"/g, '&quot;');
-                list.innerHTML += `
-                    <div class="task-item">
-                        <span><strong>${task.user}:</strong> ${task.title}</span>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(${index}, ${tasksJson})">🗑️</button>
-                    </div>`;
-            });
-        }
+    <div class="input-section">
+        <div class="input-group">
+            <select id="userSelect" class="form-select rounded-start-pill" style="max-width: 85px;">
+                <option value="יוני">יוני</option>
+                <option value="אינה">אינה</option>
+            </select>
+            <input type="text" id="taskInput" class="form-control" placeholder="מטלה חדשה...">
+            <button class="btn btn-primary rounded-end-pill px-4" onclick="addTask()"><i class="bi bi-plus-lg"></i></button>
+        </div>
+    </div>
+</div>
 
-        async function addTask() {
-            const token = document.getElementById('ghToken').value;
-            const title = document.getElementById('taskInput').value;
-            const user = document.getElementById('userSelect').value;
-            if (!token || !title) return;
-            
-            localStorage.setItem('gh_token', token);
-            
+<script>
+    const REPO = "yonathanohayon-oss/house-keeping-v2";
+    const FILE_PATH = "tasks.json";
+    let sha = "";
+    let allTasks = [];
+
+    async function fetchTasks() {
+        const token = document.getElementById('ghToken').value || localStorage.getItem('gh_token');
+        if (!token) { document.getElementById('tokenSection').style.display = 'block'; return; }
+        
+        try {
             const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
-                headers: { 'Authorization': `token ${token}` }
+                headers: { 'Authorization': `token ${token}`, 'Cache-Control': 'no-cache' }
             });
             const data = await res.json();
-            const tasks = JSON.parse(new TextDecoder('utf-8').decode(new Uint8Array(atob(data.content).split("").map(c => c.charCodeAt(0)))));
-            tasks.push({ title, user });
-            updateGithub(tasks, token, data.sha);
+            sha = data.sha;
+            
+            const decoded = new TextDecoder('utf-8').decode(new Uint8Array(atob(data.content).split("").map(c => c.charCodeAt(0))));
+            allTasks = JSON.parse(decoded);
+            renderTasks();
+        } catch (e) { console.error(e); }
+    }
+
+    function renderTasks() {
+        const list = document.getElementById('taskList');
+        list.innerHTML = allTasks.length ? '' : '<p class="text-center text-muted py-4">הכל נקי! אין מטלות 🎉</p>';
+        
+        allTasks.forEach((task, index) => {
+            const badgeClass = task.user === 'יוני' ? 'badge-yoni' : 'badge-ina';
+            const doneClass = task.done ? 'done' : '';
+            const checkIcon = task.done ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted';
+            
+            list.innerHTML += `
+                <div class="task-card">
+                    <div class="user-badge ${badgeClass}">${task.user[0]}</div>
+                    <div class="task-text ${doneClass}" onclick="toggleDone(${index})">${task.title}</div>
+                    <button class="btn-action me-2" onclick="toggleDone(${index})"><i class="bi ${checkIcon}"></i></button>
+                    <button class="btn-action text-danger" onclick="deleteTask(${index})"><i class="bi bi-trash3"></i></button>
+                </div>`;
+        });
+    }
+
+    async function addTask() {
+        const title = document.getElementById('taskInput').value;
+        const user = document.getElementById('userSelect').value;
+        const token = document.getElementById('ghToken').value || localStorage.getItem('gh_token');
+        if (!title || !token) return;
+
+        localStorage.setItem('gh_token', token);
+        allTasks.push({ title, user, done: false, date: new Date().toISOString() });
+        updateGithub();
+    }
+
+    function toggleDone(index) {
+        allTasks[index].done = !allTasks[index].done;
+        renderTasks();
+        updateGithub();
+    }
+
+    function deleteTask(index) {
+        if(confirm('למחוק את המטלה?')) {
+            allTasks.splice(index, 1);
+            updateGithub();
         }
+    }
 
-        async function deleteTask(index, currentTasks) {
-            const token = document.getElementById('ghToken').value || localStorage.getItem('gh_token');
-            currentTasks.splice(index, 1);
-            updateGithub(currentTasks, token, sha);
+    async function updateGithub() {
+        const token = localStorage.getItem('gh_token');
+        document.getElementById('status').innerText = "מעדכן ענן...";
+        
+        const bytes = new TextEncoder().encode(JSON.stringify(allTasks, null, 2));
+        const base64Content = btoa(String.fromCharCode(...bytes));
+
+        const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `token ${token}` },
+            body: JSON.stringify({ message: "Update via HomeApp", content: base64Content, sha: sha })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            sha = data.content.sha;
+            document.getElementById('status').innerText = "הסתנכרן בהצלחה ✅";
+            document.getElementById('taskInput').value = '';
+            renderTasks();
         }
+    }
 
-        async function updateGithub(newTasks, token, currentSha) {
-            document.getElementById('status').innerText = "שומר...";
-            const bytes = new TextEncoder().encode(JSON.stringify(newTasks, null, 2));
-            const base64Content = btoa(String.fromCharCode(...bytes));
-
-            const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`, {
-                method: 'PUT',
-                headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: "Update tasks", content: base64Content, sha: currentSha })
-            });
-
-            if (res.ok) {
-                document.getElementById('status').innerText = "נשמר בהצלחה!";
-                document.getElementById('taskInput').value = '';
-                fetchTasks();
-            }
-        }
-
-        if (localStorage.getItem('gh_token')) {
-            document.getElementById('ghToken').value = localStorage.getItem('gh_token');
-            fetchTasks();
-        }
-    </script>
+    fetchTasks();
+</script>
 </body>
 </html>
