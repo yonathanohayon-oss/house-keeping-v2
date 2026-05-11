@@ -2,21 +2,25 @@ name: Daily Task Reminder
 
 on:
   schedule:
-    # רץ כל יום בשעה 06:00 בבוקר (זמן UTC, שזה בערך 08:00 או 09:00 בישראל)
     - cron: '0 6 * * *'
-  workflow_dispatch: # מאפשר לך להריץ את זה ידנית לבדיקה
+  workflow_dispatch: 
 
 jobs:
   send_reminder:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # עדכון לגרסה 4 פותר את האזהרה שקיבלת
 
       - name: Send Telegram Notification
         run: |
-          TASKS=$(cat tasks.json | jq -r '.[] | "- \(.user): \(.title)"')
-          MESSAGE="בוקר טוב! 🏠%0Aאלו המטלות להיום:%0A$TASKS"
+          # קריאת המטלות ועיבודן להודעה אחת
+          TASKS=$(jq -r '.[] | "- \(.user): \(.title)"' tasks.json)
+          
+          # בניית ההודעה (שימוש ב-printf עוזר לטפל בתווים מיוחדים ועברית)
+          MESSAGE=$(printf "בוקר טוב! 🏠\nאלו המטלות להיום:\n$TASKS")
+          
+          # שליחה לטלגרם
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
             -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d "text=$MESSAGE"
