@@ -1,14 +1,38 @@
 name: Daily Task Reminder
 
 on:
-  workflow_dispatch: # מאפשר הרצה ידנית
+  schedule:
+    # רץ כל בוקר ב-06:00 UTC (שזה 08:00 או 09:00 בישראל)
+    - cron: '0 6 * * *'
+  workflow_dispatch: # כפתור הרצה ידנית לבדיקות
 
 jobs:
-  test_telegram:
+  send_reminder:
     runs-on: ubuntu-latest
     steps:
-      - name: Simple Send
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Send Telegram Notification
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
-            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -d "text=הבדיקה הצליחה! הבוט עובד בקבוצה 🚀"
+          # בדיקה אם הקובץ קיים, אם לא - יוצר אחד בסיסי
+          if [ ! -f tasks.json ]; then
+            echo "[]" > tasks.json
+          fi
+
+          # עיבוד המטלות מהקובץ והפיכתן לרשימה
+          TASKS=$(jq -r '.[] | "- \(.user): \(.title)"' tasks.json)
+          
+          if [ -z "$TASKS" ]; then
+            MESSAGE="בוקר טוב! 🏠 אין מטלות מתוכננות להיום. תהנו מהחופש!"
+          else
+            MESSAGE=$(printf "בוקר טוב יניב ואינה! 🏠\nאלו המטלות שלנו להיום:\n\n$TASKS")
+          fi
+          
+          # שליחה לטלגרם
+          curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" \
+            --data-urlencode "chat_id=$TELEGRAM_CHAT_ID" \
+            --data-urlencode "text=$MESSAGE"
