@@ -6,12 +6,6 @@
     "user": null
   },
   {
-    "title": "ניקוי מזגן",
-    "points": 8,
-    "done": true,
-    "user": "יוני"
-  },
-  {
     "title": "החלפת מצעים",
     "points": 8,
     "done": false,
@@ -32,8 +26,14 @@
   {
     "title": "הפעלת מדיח",
     "points": 5,
-    "done": false,
-    "user": null
+    "done": true,
+    "user": "יוני"
+  },
+  {
+    "title": "ניקוי מזגן",
+    "points": 8,
+    "done": true,
+    "user": "יוני"
   },
   {
     "title": "החלפת מצעים",
